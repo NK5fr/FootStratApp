@@ -19,6 +19,8 @@ import javafx.stage.Stage;
 public class MainView extends Stage implements Observer {
 
     private final TeamManager teamManager;
+
+    private final Canvas pitch = new Canvas(1000, 500);
     private final Pane terrain = new Pane();
     private final Button addPlayerBlue = new Button("Add Player Blue");
     private final Button addPlayerRed = new Button("Add Player Red");
@@ -28,6 +30,8 @@ public class MainView extends Stage implements Observer {
     private final ListView<String> playerListBlue = new ListView<>();
 
     private final ListView<String> playerListRed = new ListView<>();
+
+    private final Button resetDraws = new Button("Reset Draws");
     private static final int WIDTH = 1250;
     private static final int HEIGHT = 500;
 
@@ -36,13 +40,26 @@ public class MainView extends Stage implements Observer {
         this.teamManager.attach(this);
         setActions();
         this.setMainScene();
+        this.setBall();
         this.setTitle("FootStratApp");
         this.setResizable(false);
         this.show();
     }
 
-    public void setPitch() {
-        Canvas pitch = new Canvas(1250, 500);
+    public void setBall(){
+        Ball ball = new Ball(500, 250, 10);
+        terrain.getChildren().add(ball);
+        ball.setOnMouseDragged(e -> {
+            if(e.getX() >= 10 && e.getX() <= 990){
+                ball.setCenterX(e.getX());
+            }
+            if(e.getY() >= 10 && e.getY() <= 490){
+                ball.setCenterY(e.getY());
+            }
+        });
+    }
+
+    public void setPitch(Canvas pitch){
         GraphicsContext gc = pitch.getGraphicsContext2D();
         gc.setFill(Color.GREEN);
         gc.fillRect(0, 0, 1000, 500);
@@ -62,7 +79,6 @@ public class MainView extends Stage implements Observer {
         gc.fillRect(30, 125, 175, 10);
         gc.fillRect(30, 375, 175, 10);
         gc.fillRect(195, 125, 10, 250);
-        terrain.getChildren().add(pitch);
     }
 
     private VBox setMenu() {
@@ -77,16 +93,19 @@ public class MainView extends Stage implements Observer {
         menu.getChildren().add(playerListBlue);
         menu.getChildren().add(teamRed);
         menu.getChildren().add(playerListRed);
+        menu.getChildren().add(resetDraws);
         addPlayerBlue.setMinWidth(125);
         addPlayerRed.setMinWidth(125);
         delPlayerRed.setMinWidth(125);
         delPlayerBlue.setMinWidth(125);
+        resetDraws.setMinWidth(250);
         return menu;
     }
 
     private void setMainScene() {
-        setPitch();
+        setPitch(pitch);
         HBox root = new HBox();
+        terrain.getChildren().add(pitch);
         root.getChildren().add(terrain);
         root.getChildren().add(setMenu());
         this.setScene(new Scene(root, WIDTH, HEIGHT));
@@ -140,6 +159,7 @@ public class MainView extends Stage implements Observer {
 
 
     public void setActions(){
+        setPitchAction(pitch);
         addPlayerBlue.setOnAction(event -> new AddPlayerView(teamManager, "Blue"));
         addPlayerRed.setOnAction(event -> new AddPlayerView(teamManager, "Red"));
         delPlayerBlue.setOnAction(event -> {
@@ -154,6 +174,7 @@ public class MainView extends Stage implements Observer {
                 teamManager.removePlayer(pn, "Red");
             }
         });
+        resetDraws.setOnAction(e -> setPitch(pitch));
         playerListBlue.getSelectionModel().getSelectedItems().addListener(new BlueListeListener());
         playerListRed.getSelectionModel().getSelectedItems().addListener(new RedListeListener());
     }
@@ -166,6 +187,14 @@ public class MainView extends Stage implements Observer {
             if(f.getY() >= 20 && f.getY() <= 480){
                 pi.setCenterY(f.getY());
             }
+        });
+    }
+
+    private void setPitchAction(Canvas pitch){
+        pitch.setOnMouseDragged(e -> {
+            GraphicsContext gc = pitch.getGraphicsContext2D();
+            gc.setFill(Color.BLACK);
+            gc.fillRect(e.getX()-3, e.getY()-3, 6, 6);
         });
     }
 
